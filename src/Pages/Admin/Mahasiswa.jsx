@@ -4,6 +4,7 @@ import Table from '../../components/Table';
 import DeleteModal from '../../components/Modal/DeleteModal';
 import AddEditModal from '../../components/Modal/AddEditModal';
 import Swal from 'sweetalert2';
+import AdminLayout from '../../Layouts/AdminLayout';
 
 const Mahasiswa = () => {
   const [mahasiswaData] = useState([
@@ -46,41 +47,44 @@ const Mahasiswa = () => {
   };
 
   return (
-    <div>
-      <h1 className="font-bold text-xl text-white mb-6">Daftar Mahasiswa</h1>
-      <div className="mb-4">
-        <Button 
-          style="success" 
-          text="Tambah Mahasiswa" 
-          onClick={() => setAddModalOpen(true)} 
+
+    <AdminLayout>
+      <div>
+        <h1 className="font-bold text-xl text-white mb-6">Daftar Mahasiswa</h1>
+        <div className="mb-4">
+          <Button
+            style="success"
+            text="Tambah Mahasiswa"
+            onClick={() => setAddModalOpen(true)}
+          />
+        </div>
+        <Table
+          data={mahasiswaData}
+          onEdit={() => setEditModalOpen(true)}
+          onDelete={() => setDeleteModalOpen(true)}
+        />
+
+        <DeleteModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setDeleteModalOpen(false)}
+          onConfirm={handleDelete}
+        />
+
+        <AddEditModal
+          isOpen={isAddModalOpen}
+          onClose={() => setAddModalOpen(false)}
+          onSubmit={handleAdd}
+          type="add"
+        />
+
+        <AddEditModal
+          isOpen={isEditModalOpen}
+          onClose={() => setEditModalOpen(false)}
+          onSubmit={handleEdit}
+          type="edit"
         />
       </div>
-      <Table 
-        data={mahasiswaData} 
-        onEdit={() => setEditModalOpen(true)}
-        onDelete={() => setDeleteModalOpen(true)}
-      />
-
-      <DeleteModal 
-        isOpen={isDeleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        onConfirm={handleDelete}
-      />
-
-      <AddEditModal
-        isOpen={isAddModalOpen}
-        onClose={() => setAddModalOpen(false)}
-        onSubmit={handleAdd}
-        type="add"
-      />
-
-      <AddEditModal
-        isOpen={isEditModalOpen}
-        onClose={() => setEditModalOpen(false)}
-        onSubmit={handleEdit}
-        type="edit"
-      />
-    </div>
+    </AdminLayout>
   );
 };
 
