@@ -1,53 +1,87 @@
-import React, { useState } from 'react';
-import Button from '../../components/Button';
-import Table from '../../components/Table';
-import DeleteModal from '../../components/Modal/DeleteModal';
-import AddEditModal from '../../components/Modal/AddEditModal';
-import Swal from 'sweetalert2';
-import AdminLayout from '../../Layouts/AdminLayout';
+// src/components/Mahasiswa.js
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import Button from "../../components/Button";
+import Table from "../../components/Table";
+import DeleteModal from "../../components/Modal/DeleteModal";
+import AddEditModal from "../../components/Modal/AddEditModal";
+import Swal from "sweetalert2";
+import AdminLayout from "../../Layouts/AdminLayout";
+import axios from "axios";
+import { BASE_URL } from "../../utils/constants";
+import { setMahasiswaData, setCurrentPage, setAddModalOpen, setEditModalOpen, setEditMahasiswa } from "../../redux/actions/mahasiswaActions";
 
 const Mahasiswa = () => {
-  const [mahasiswaData] = useState([
-    { id: 1, nama: 'Ricky Primayuda Putra', nim: 'A11.2022.14486' },
-    { id: 2, nama: 'Rizky Ramadhan', nim: 'A11.2022.14487' },
-  ]);
+  const dispatch = useDispatch();
+  const mahasiswaData = useSelector((state) => state.mahasiswa.mahasiswaData);
+  const currentPage = useSelector((state) => state.mahasiswa.currentPage);
+  const isAddModalOpen = useSelector((state) => state.mahasiswa.isAddModalOpen);
+  const isEditModalOpen = useSelector((state) => state.mahasiswa.isEditModalOpen);
+  const editMahasiswa = useSelector((state) => state.mahasiswa.editMahasiswa);
+  const itemsPerPage = 10;
 
-  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [isAddModalOpen, setAddModalOpen] = useState(false);
-  const [isEditModalOpen, setEditModalOpen] = useState(false);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = mahasiswaData.slice(indexOfFirstItem, indexOfLastItem);
 
-  const handleDelete = () => {
-    Swal.fire({
-      title: "Berhasil!",
-      text: "Mahasiswa Berhasil Dihapus",
-      icon: "success",
-      confirmButtonText: "Okay",
-    });
-    setDeleteModalOpen(false);
+  const fetchMahasiswa = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await axios.get(`${BASE_URL}/api/mahasiswa`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.data.code === 200) {
+        dispatch(setMahasiswaData(response.data.data));
+      } else {
+        Swal.fire("Error", "Gagal memuat data mahasiswa", "error");
+      }
+    } catch (error) {
+      Swal.fire("Error", "Terjadi kesalahan saat memuat data", "error");
+    }
   };
 
-  const handleAdd = () => {
-    Swal.fire({
-      title: "Berhasil!",
-      text: "Mahasiswa Berhasil Ditambahkan",
-      icon: "success",
-      confirmButtonText: "Okay",
-    });
-    setAddModalOpen(false);
+  const handleEdit = (mahasiswa) => {
+    dispatch(setEditMahasiswa(mahasiswa));
+    dispatch(setEditModalOpen(true)); 
   };
 
-  const handleEdit = () => {
+  const handleDelete = (id) => {
     Swal.fire({
-      title: "Berhasil!",
-      text: "Mahasiswa Berhasil Diubah",
-      icon: "success",
-      confirmButtonText: "Okay",
+      title: "Apakah Anda yakin?",
+      text: "Mahasiswa ini akan dihapus.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Ya, Hapus",
+      cancelButtonText: "Tidak",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const token = localStorage.getItem("authToken");
+          const response = await axios.delete(`${BASE_URL}/api/mahasiswa/${id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          if (response.data.code === 200) {
+            Swal.fire("Berhasil!", "Mahasiswa berhasil dihapus.", "success");
+            fetchMahasiswa(); 
+          } else {
+            Swal.fire("Gagal", "Terjadi kesalahan saat menghapus mahasiswa.", "error");
+          }
+        } catch (error) {
+          Swal.fire("Error", "Terjadi kesalahan saat menghapus data.", "error");
+        }
+      }
     });
-    setEditModalOpen(false);
   };
+
+  useEffect(() => {
+    fetchMahasiswa();
+  }, []);
 
   return (
-
     <AdminLayout>
       <div>
         <h1 className="font-bold text-xl text-white mb-6">Daftar Mahasiswa</h1>
@@ -55,33 +89,30 @@ const Mahasiswa = () => {
           <Button
             style="success"
             text="Tambah Mahasiswa"
-            onClick={() => setAddModalOpen(true)}
+            onClick={() => dispatch(setAddModalOpen(true))}
           />
         </div>
-        <Table
-          data={mahasiswaData}
-          onEdit={() => setEditModalOpen(true)}
-          onDelete={() => setDeleteModalOpen(true)}
-        />
 
-        <DeleteModal
-          isOpen={isDeleteModalOpen}
-          onClose={() => setDeleteModalOpen(false)}
-          onConfirm={handleDelete}
+        <Table
+          data={currentItems}
+          onEdit={handleEdit} 
+          onDelete={handleDelete}
+          currentPage={currentPage}
+          itemsPerPage={itemsPerPage}
         />
 
         <AddEditModal
           isOpen={isAddModalOpen}
-          onClose={() => setAddModalOpen(false)}
-          onSubmit={handleAdd}
+          onClose={() => dispatch(setAddModalOpen(false))}
+          onSubmit={fetchMahasiswa}
           type="add"
         />
-
         <AddEditModal
           isOpen={isEditModalOpen}
-          onClose={() => setEditModalOpen(false)}
-          onSubmit={handleEdit}
+          onClose={() => dispatch(setEditModalOpen(false))}
+          onSubmit={fetchMahasiswa}
           type="edit"
+          mahasiswa={editMahasiswa} 
         />
       </div>
     </AdminLayout>

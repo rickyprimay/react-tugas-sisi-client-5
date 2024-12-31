@@ -1,7 +1,4 @@
-import React from 'react';
-import Button from '../Button';
-
-const DeleteModal = ({ isOpen, onClose, onConfirm }) => {
+const DeleteModal = ({ isOpen, onClose, onConfirm, id }) => {
   if (!isOpen) return null;
 
   return (
@@ -39,7 +36,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm }) => {
             <button
               type="button"
               className="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center me-2"
-              onClick={onConfirm}
+              onClick={() => onConfirm(id)} 
             >
               Ya
             </button>

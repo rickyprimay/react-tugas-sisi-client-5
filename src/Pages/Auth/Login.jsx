@@ -1,12 +1,64 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import Swal from "sweetalert2";
+import { BASE_URL } from "../../utils/constants";
 
 const Login = () => {
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (event) => {
-    event.preventDefault(); 
-    navigate("/dashboard");
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setIsLoading(true);
+    try {
+      const response = await axios.post(`${BASE_URL}/api/login`, formData, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.data.code === 200) {
+        const { token, user } = response.data.data;
+
+        localStorage.setItem("authToken", token);
+        localStorage.setItem("user", JSON.stringify(user));
+
+        Swal.fire({
+          icon: "success",
+          title: "Berhasil",
+          text: "Login berhasil, selamat datang!",
+          timer: 2000,
+          timerProgressBar: true,
+          showConfirmButton: false,
+        });
+
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 2000);
+      } else {
+        throw new Error(response.data.message || "Login gagal.");
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text: error.response?.data?.message || error.message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -29,6 +81,8 @@ const Login = () => {
                   type="email"
                   name="email"
                   id="email"
+                  value={formData.email}
+                  onChange={handleChange}
                   className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                   placeholder="name@company.com"
                   required
@@ -45,6 +99,8 @@ const Login = () => {
                   type="password"
                   name="password"
                   id="password"
+                  value={formData.password}
+                  onChange={handleChange}
                   placeholder="••••••••"
                   className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                   required
@@ -52,9 +108,12 @@ const Login = () => {
               </div>
               <button
                 type="submit"
-                className="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
+                className={`w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 ${
+                  isLoading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+                disabled={isLoading}
               >
-                Login
+                {isLoading ? "Loading..." : "Login"}
               </button>
               <p className="text-sm font-light text-gray-500 dark:text-gray-400">
                 Belum punya akun?{" "}

@@ -1,7 +1,52 @@
-import React from 'react';
+import React, { useState } from 'react';
+import axios from 'axios';
+import { BASE_URL } from '../../utils/constants';
+import Swal from 'sweetalert2';
 
-const AddEditModal = ({ isOpen, onClose, onSubmit, type = 'add' }) => {
+const AddEditModal = ({ isOpen, onClose, onSubmit, type = 'add', mahasiswa = {} }) => {
   if (!isOpen) return null;
+
+  const [nama, setNama] = useState(mahasiswa.nama || '');
+  const [nim, setNim] = useState(mahasiswa.nim || '');
+  const [alamat, setAlamat] = useState(mahasiswa.alamat || '');
+  const [umur, setUmur] = useState(mahasiswa.umur || '');
+  const [progdiId, setProgdiId] = useState(mahasiswa.progdi_id || '');
+
+  const handleSubmit = async () => {
+    const data = {
+      progdi_id: progdiId,
+      nim: nim,
+      nama: nama,
+      alamat: alamat,
+      umur: umur,
+    };
+
+    try {
+      const token = localStorage.getItem('authToken');
+      let response;
+
+      if (type === 'add') {
+        response = await axios.post(`${BASE_URL}/api/mahasiswa`, data, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } else if (type === 'edit') {
+        response = await axios.put(`${BASE_URL}/api/mahasiswa/${mahasiswa.id}`, data, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
+
+      Swal.fire('Success', `Mahasiswa berhasil ${type === 'add' ? 'ditambahkan' : 'diubah'}`, 'success');
+      onSubmit();
+      onClose();
+    } catch (error) {
+      console.error(error.response?.data);
+      Swal.fire('Error', 'Terjadi kesalahan saat menghubungi server', 'error');
+    }
+  };
 
   return (
     <div className="fixed top-0 right-0 left-0 z-50 flex justify-center items-center w-full h-full bg-black bg-opacity-50">
@@ -13,53 +58,83 @@ const AddEditModal = ({ isOpen, onClose, onSubmit, type = 'add' }) => {
             </h3>
             <button
               type="button"
-              className="text-gray-400 bg-transparent rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center hover:bg-gray-600 hover:text-white"
+              className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center"
               onClick={onClose}
             >
-              <svg className="w-3 h-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
-                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+              <svg
+                aria-hidden="true"
+                className="w-5 h-5"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M4.293 4.293a1 1 0 011.414 0L10 7.586l4.293-4.293a1 1 0 111.414 1.414L11.414 9l4.293 4.293a1 1 0 11-1.414 1.414L10 10.414l-4.293 4.293a1 1 0 11-1.414-1.414L8.586 9 4.293 4.707a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                />
               </svg>
-              <span className="sr-only">Close modal</span>
             </button>
           </div>
-          <div className="p-4">
-            <div className="grid gap-4 mb-4 grid-cols-2">
-              <div className="col-span-2">
-                <label htmlFor="nama" className="block mb-2 text-sm font-medium text-white">Nama</label>
-                <input
-                  type="text"
-                  name="nama"
-                  id="nama"
-                  className="border text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 bg-gray-600 border-gray-500 placeholder-gray-400 text-white"
-                  placeholder="Nama Mahasiswa"
-                />
-              </div>
-              <div className="col-span-2">
-                <label htmlFor="nim" className="block mb-2 text-sm font-medium text-white">NIM</label>
-                <input
-                  type="text"
-                  name="nim"
-                  id="nim"
-                  className="border text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 bg-gray-600 border-gray-500 placeholder-gray-400 text-white"
-                  placeholder="A11....."
-                />
-              </div>
-              <div className="col-span-2">
-                <label htmlFor="jurusan" className="block mb-2 text-sm font-medium text-white">Jurusan</label>
-                <select
-                  id="jurusan"
-                  className="border text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bg-gray-600 border-gray-500 placeholder-gray-400 text-white"
-                >
-                  <option value="">Pilih Jurusan</option>
-                  <option value="TI">Teknik Informatika</option>
-                  <option value="SI">Sistem Informasi</option>
-                  <option value="MI">Manajemen Informatika</option>
-                </select>
-              </div>
+          <div className="p-6 space-y-6">
+            <div className="mb-4">
+              <label htmlFor="nama" className="block text-sm font-medium text-white">
+                Nama
+              </label>
+              <input
+                type="text"
+                id="nama"
+                value={nama}
+                onChange={(e) => setNama(e.target.value)}
+                className="w-full p-2 mt-1 text-sm text-white bg-gray-800 rounded border border-gray-700"
+                placeholder="Masukkan Nama"
+              />
             </div>
+
+            <div className="mb-4">
+              <label htmlFor="nim" className="block text-sm font-medium text-white">
+                NIM
+              </label>
+              <input
+                type="text"
+                id="nim"
+                value={nim}
+                onChange={(e) => setNim(e.target.value)}
+                className="w-full p-2 mt-1 text-sm text-white bg-gray-800 rounded border border-gray-700"
+                placeholder="Masukkan NIM"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label htmlFor="alamat" className="block text-sm font-medium text-white">
+                Alamat
+              </label>
+              <textarea
+                id="alamat"
+                value={alamat}
+                onChange={(e) => setAlamat(e.target.value)}
+                className="w-full p-2 mt-1 text-sm text-white bg-gray-800 rounded border border-gray-700"
+                placeholder="Masukkan Alamat"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label htmlFor="umur" className="block text-sm font-medium text-white">
+                Umur
+              </label>
+              <input
+                type="number"
+                id="umur"
+                value={umur}
+                onChange={(e) => setUmur(e.target.value)}
+                className="w-full p-2 mt-1 text-sm text-white bg-gray-800 rounded border border-gray-700"
+                placeholder="Masukkan Umur"
+              />
+            </div>
+
             <button
-              type="submit"
-              onClick={onSubmit}
+              type="button"
+              onClick={handleSubmit}
               className="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
             >
               {type === 'add' ? 'Tambah' : 'Simpan Perubahan'}
@@ -70,5 +145,6 @@ const AddEditModal = ({ isOpen, onClose, onSubmit, type = 'add' }) => {
     </div>
   );
 };
+
 
 export default AddEditModal;
